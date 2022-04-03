@@ -143,10 +143,13 @@ export default defineComponent({
         if(prev != null)
         {
           CTX.lineWidth = 2
+          const REVP = this.reverse(point,prev);
           draw_line(point,prev)
+          draw_line(point,REVP)
           CTX.lineWidth = 1
           draw_circle(point,5)
           draw_circle(prev,5)
+          draw_circle(REVP,5)
           prev = null
         }
         else
