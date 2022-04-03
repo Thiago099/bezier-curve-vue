@@ -1,13 +1,13 @@
 <template>
-{{state}}
+<div class="content">
 <canvas 
 ref="canvas" 
 width="800" 
 height="600" 
-style="border:1px solid var(--bright);margin:100px"
 @mousedown="handleMouseDown"
 @mouseup = "handleMouseUp"
 ></canvas>
+</div>
 </template>
 
 <script lang="ts">
@@ -212,4 +212,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
+canvas{
+border:1px solid var(--bright);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
 </style>
