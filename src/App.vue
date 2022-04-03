@@ -68,7 +68,8 @@ export default defineComponent({
           {
             this.state = 3
             this.drag_point = point
-            this.drag_shift = {x:point.x - mouse.x, y:point.y - mouse.y}
+            const REV = this.reverse(point,prev);
+            this.drag_shift = {x:REV.x - mouse.x, y:REV.y - mouse.y}
             this.drag_also = prev
             this.$refs.canvas.addEventListener('mousemove',this.dragStep)
             return
@@ -137,6 +138,7 @@ export default defineComponent({
     handleMouseUp(e:MouseEvent)
     {
       this.$refs.canvas.removeEventListener('mousemove',this.dragStep)
+      this.state = 0
     },
     
     update(){
