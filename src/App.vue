@@ -206,6 +206,8 @@ export default defineComponent({
     }
   },
   mounted() {
+    this.$refs.canvas.width = window.innerWidth;
+    this.$refs.canvas.height = window.innerHeight;
     this.update();
   },
 });
