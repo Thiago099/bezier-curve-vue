@@ -1,5 +1,5 @@
 # canvas
-
+this is a work in progress html canvas project
 ## Project setup
 ```
 npm install
