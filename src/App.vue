@@ -4,8 +4,11 @@
 ref="canvas" 
 width="800" 
 height="600" 
+tabindex="0"
 @mousedown="handleMouseDown"
 @mouseup = "handleMouseUp"
+@keydown="handleKeyDown"
+@keyup="handleKeyUp"
 ></canvas>
 </div>
 </template>
@@ -23,8 +26,12 @@ export default defineComponent({
       points:[] as point[],
       drag_point:null,
       drag_shift:null,
+      drag_center:null,
       drag_also:null,
       drag_also_shift:null,
+      drag:false,
+      key:null,
+      mouse:null as point,
       state:0
     }
   },
@@ -35,43 +42,65 @@ export default defineComponent({
           const y = p1.y - p2.y
           return Math.sqrt(x * x + y * y)
       }
+      this.drag = true
       
       
       const {offsetX, offsetY} = e
-      const mouse:point = {x:offsetX,y:offsetY}
+      this.mouse = {x:offsetX,y:offsetY}
       var prev = null
+      var i = 0;
       for(const point of this.points)
       {
         if(prev != null)
         {
           const REVP = this.reverse(point,prev);
-          if(getDistance(point,mouse)<10)
+          // first helper
+          if(getDistance(point,this.mouse)<10)
           {
             this.drag_point = point
-            this.drag_shift = {x:point.x - mouse.x, y:point.y - mouse.y}
+            this.drag_shift = {x:point.x - this.mouse.x, y:point.y - this.mouse.y}
             this.$refs.canvas.addEventListener('mousemove',this.dragStep)
             this.state = 0
+
+            this.drag_also = prev
+            this.drag_also_shift = {x:prev.x - this.mouse.x, y:prev.y - this.mouse.y}
             
             return
           }
-          if(getDistance(prev,mouse)<10)
+          //center
+          if(getDistance(prev,this.mouse)<10)
           {
-            this.drag_point = prev
-            this.drag_shift = {x:prev.x - mouse.x, y:prev.y - mouse.y}
-            this.$refs.canvas.addEventListener('mousemove',this.dragStep)
-            this.drag_also = point
-            this.drag_also_shift = {x:point.x - mouse.x, y:point.y - mouse.y}
-            this.state = 2
+            console.log('center') 
+            if(e.button == 1)
+            {
+              e.preventDefault()
+              e.stopPropagation()
+              this.points.splice(i-1,2)
+              return
+            }
+            else
+            {
+              this.drag_point = prev
+              this.drag_shift = {x:prev.x - this.mouse.x, y:prev.y - this.mouse.y}
+              this.$refs.canvas.addEventListener('mousemove',this.dragStep)
+              this.drag_also = point
+              this.drag_also_shift = {x:point.x - this.mouse.x, y:point.y - this.mouse.y}
+              this.state = 2
+            }
             return
           }
-          if(getDistance(REVP,mouse)<10)
+          //second helper
+          if(getDistance(REVP,this.mouse)<10)
           {
             this.state = 3
             this.drag_point = point
             const REV = this.reverse(point,prev);
-            this.drag_shift = {x:REV.x - mouse.x, y:REV.y - mouse.y}
-            this.drag_also = prev
+            this.drag_shift = {x:REV.x - this.mouse.x, y:REV.y - this.mouse.y}
+            this.drag_center = prev
             this.$refs.canvas.addEventListener('mousemove',this.dragStep)
+
+            this.drag_also = prev
+            this.drag_also_shift = {x:prev.x - this.mouse.x, y:prev.y - this.mouse.y}
             return
           }
           prev = null
@@ -80,10 +109,15 @@ export default defineComponent({
         {
           prev = point
         }
+        i++
       }
       if(this.state == 0)
       {
-        this.points.push({x:offsetX,y:offsetY})
+        const CENTER = {x:offsetX,y:offsetY}
+        this.points.push(CENTER)
+
+        this.drag_also = CENTER
+
         const HANDLE = {x:offsetX,y:offsetY}
         this.points.push(HANDLE)
         this.drag_point = HANDLE
@@ -91,7 +125,19 @@ export default defineComponent({
         this.state = 1
         this.$refs.canvas.addEventListener('mousemove',this.dragStep)
       }
-      
+    },
+    handleKeyDown(e:KeyboardEvent)
+    {
+      this.key = e.key
+      if(e.key == ' ')
+      {
+        this.drag_also_shift = {x:this.drag_also.x - this.mouse.x, y:this.drag_also.y - this.mouse.y}
+      }
+      this.update()
+    },
+    handleKeyUp(e:KeyboardEvent)
+    {
+      this.key = null
       this.update()
     },
     reverse(point:point,center:point):point
@@ -104,18 +150,32 @@ export default defineComponent({
     dragStep(e:MouseEvent)
     {
       const {offsetX, offsetY} = e
+      this.mouse = {x:offsetX,y:offsetY}
       switch(this.state)
       {
         case 0:
         {
           this.drag_point.x = offsetX + this.drag_shift.x
           this.drag_point.y = offsetY + this.drag_shift.y
+          if(this.key == ' ')
+          {
+            this.drag_also.x = offsetX + this.drag_also_shift.x
+            this.drag_also.y = offsetY + this.drag_also_shift.y
+          } 
+          
         }
         break
         case 1:
         {
-          this.drag_point.x = ((offsetX - this.drag_shift.x) * -1) + this.drag_shift.x
-          this.drag_point.y = ((offsetY - this.drag_shift.y) * -1) + this.drag_shift.y
+          this.drag_point.x = ((offsetX - this.drag_also.x) * -1) + this.drag_also.x
+          this.drag_point.y = ((offsetY - this.drag_also.y) * -1) + this.drag_also.y
+
+          if(this.key == ' ')
+          {
+            this.drag_also.x = offsetX + this.drag_also_shift.x
+            this.drag_also.y = offsetY + this.drag_also_shift.y
+          } 
+          
         }
         break
         case 2:
@@ -128,8 +188,14 @@ export default defineComponent({
         break
         case 3:
         {
-          this.drag_point.x = ((offsetX + this.drag_shift.x - this.drag_also.x) * -1) + this.drag_also.x 
-          this.drag_point.y = ((offsetY + this.drag_shift.y - this.drag_also.y) * -1) + this.drag_also.y 
+          this.drag_point.x = ((offsetX + this.drag_shift.x - this.drag_center.x) * -1) + this.drag_center.x 
+          this.drag_point.y = ((offsetY + this.drag_shift.y - this.drag_center.y) * -1) + this.drag_center.y 
+
+          if(this.key == ' ')
+          {
+            this.drag_also.x = offsetX + this.drag_also_shift.x
+            this.drag_also.y = offsetY + this.drag_also_shift.y
+          }
         }
         break;
       }
@@ -139,6 +205,8 @@ export default defineComponent({
     {
       this.$refs.canvas.removeEventListener('mousemove',this.dragStep)
       this.state = 0
+      this.drag = false
+      this.update()
     },
     
     update(){
@@ -182,6 +250,7 @@ export default defineComponent({
       CTX.strokeStyle = "rgb(0,128,255)";
       
       var prev = null
+      if((!this.drag && this.key != 'm') || this.points.length == 2 || (this.drag && this.key == 'm') )
       for(const point of this.points)
       {
         if(prev != null)
@@ -220,5 +289,6 @@ border:1px solid var(--bright);
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  outline: none;
 }
 </style>
