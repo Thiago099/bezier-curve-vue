@@ -52,15 +52,23 @@ export default defineComponent({
         const HANDLE = {x:offsetX,y:offsetY}
         this.points.push(HANDLE)
         this.drag_point = HANDLE
+        this.drag_shift = {x:offsetX,y:offsetY}
         this.state = 1
         this.$refs.canvas.addEventListener('mousemove',this.dragStep)
       }
       
       this.update()
     },
+    reverse(point:point,center:point):point
+    {
+      return {
+        x:((point.x - center.x) * -1) + center.x,
+        y:((point.y - center.y) * -1) + center.y,
+      }
+    },
     dragStep(e:MouseEvent)
     {
-        const {offsetX, offsetY} = e
+      const {offsetX, offsetY} = e
       switch(this.state)
       {
         case 0:
@@ -72,8 +80,8 @@ export default defineComponent({
         break
         case 1:
         {
-          this.drag_point.x = offsetX
-          this.drag_point.y = offsetY
+          this.drag_point.x = ((offsetX - this.drag_shift.x) * -1) + this.drag_shift.x
+          this.drag_point.y = ((offsetY - this.drag_shift.y) * -1) + this.drag_shift.y
         }
         break
           
@@ -123,7 +131,7 @@ export default defineComponent({
       CTX.lineWidth = 1
       for(var i = 2; i < this.points.length;i+=2)
       {
-        draw_bezier(this.points[i-2],this.points[i-1],this.points[i+1],this.points[i])
+        draw_bezier(this.points[i-2],this.reverse(this.points[i-1],this.points[i-2]),this.points[i+1],this.points[i])
       }
       
       CTX.fillStyle = "rgb(0,50,128)";
