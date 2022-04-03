@@ -19,9 +19,7 @@ export default defineComponent({
   name: 'App',
   data(){
     return {
-      points:
-      [
-      ] as point[],
+      points:[] as point[],
       drag_point:null,
       drag_shift:null,
       state:0
