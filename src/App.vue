@@ -1,4 +1,5 @@
 <template>
+{{state}}
 <canvas 
 ref="canvas" 
 width="800" 
@@ -22,6 +23,8 @@ export default defineComponent({
       points:[] as point[],
       drag_point:null,
       drag_shift:null,
+      drag_also:null,
+      drag_also_shift:null,
       state:0
     }
   },
@@ -36,14 +39,45 @@ export default defineComponent({
       
       const {offsetX, offsetY} = e
       const mouse:point = {x:offsetX,y:offsetY}
+      var prev = null
       for(const point of this.points)
       {
-        if(getDistance(point,mouse)<10)
+        if(prev != null)
         {
-          this.drag_point = point
-          this.drag_shift = {x:point.x - mouse.x, y:point.y - mouse.y}
-          this.$refs.canvas.addEventListener('mousemove',this.dragStep)
-          return
+          const REVP = this.reverse(point,prev);
+          if(getDistance(point,mouse)<10)
+          {
+            this.drag_point = point
+            this.drag_shift = {x:point.x - mouse.x, y:point.y - mouse.y}
+            this.$refs.canvas.addEventListener('mousemove',this.dragStep)
+            this.state = 0
+            
+            return
+          }
+          if(getDistance(prev,mouse)<10)
+          {
+            this.drag_point = prev
+            this.drag_shift = {x:prev.x - mouse.x, y:prev.y - mouse.y}
+            this.$refs.canvas.addEventListener('mousemove',this.dragStep)
+            this.drag_also = point
+            this.drag_also_shift = {x:point.x - mouse.x, y:point.y - mouse.y}
+            this.state = 2
+            return
+          }
+          if(getDistance(REVP,mouse)<10)
+          {
+            this.state = 3
+            this.drag_point = point
+            this.drag_shift = {x:point.x - mouse.x, y:point.y - mouse.y}
+            this.drag_also = prev
+            this.$refs.canvas.addEventListener('mousemove',this.dragStep)
+            return
+          }
+          prev = null
+        }
+        else
+        {
+          prev = point
         }
       }
       if(this.state == 0)
@@ -75,7 +109,6 @@ export default defineComponent({
         {
           this.drag_point.x = offsetX + this.drag_shift.x
           this.drag_point.y = offsetY + this.drag_shift.y
-          
         }
         break
         case 1:
@@ -84,17 +117,26 @@ export default defineComponent({
           this.drag_point.y = ((offsetY - this.drag_shift.y) * -1) + this.drag_shift.y
         }
         break
-          
+        case 2:
+        {
+          this.drag_point.x = offsetX + this.drag_shift.x
+          this.drag_point.y = offsetY + this.drag_shift.y
+          this.drag_also.x = offsetX + this.drag_also_shift.x
+          this.drag_also.y = offsetY + this.drag_also_shift.y
+        }
+        break
+        case 3:
+        {
+          this.drag_point.x = ((offsetX + this.drag_shift.x - this.drag_also.x) * -1) + this.drag_also.x 
+          this.drag_point.y = ((offsetY + this.drag_shift.y - this.drag_also.y) * -1) + this.drag_also.y 
+        }
+        break;
       }
       this.update();
     },
     handleMouseUp(e:MouseEvent)
     {
       this.$refs.canvas.removeEventListener('mousemove',this.dragStep)
-      if(this.state == 1)
-      {
-        this.state = 0
-      }
     },
     
     update(){
@@ -156,7 +198,6 @@ export default defineComponent({
         {
           prev = point
         }
-        
       }
       
       
