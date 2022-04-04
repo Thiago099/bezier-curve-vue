@@ -1,5 +1,12 @@
 # canvas
 this is a work in progress html canvas project
+### Controls
+right click to create node
+left click to delete a node
+right click to drag a node
+space while holding a secondary helper to move the primary
+
+
 ## Project setup
 ```
 npm install
@@ -19,6 +26,8 @@ npm run build
 ```
 npm run lint
 ```
+
+
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
