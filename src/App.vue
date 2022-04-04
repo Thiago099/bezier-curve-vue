@@ -1,17 +1,22 @@
 <template>
-<div class="content">
-<canvas 
-ref="canvas" 
-width="800" 
-height="600" 
-tabindex="0"
-@mousedown="handleMouseDown"
-@mouseup = "handleMouseUp"
-@keydown="handleKeyDown"
-@keyup="handleKeyUp"
-@contextmenu="$event.preventDefault();$event.stopPropagation()"
-></canvas>
-</div>
+  <div class="content">
+    <p>{{history}}</p>
+    <p>{{history_point}}</p>
+    <p>
+      {{this.points}}
+    </p>
+    <canvas 
+      ref="canvas" 
+      width="800" 
+      height="600" 
+      tabindex="0"
+      @mousedown="handleMouseDown"
+      @mouseup="handleMouseUp"
+      @keydown="handleKeyDown"
+      @keyup="handleKeyUp"
+      @contextmenu="$event.preventDefault();$event.stopPropagation()"
+    ></canvas>
+  </div>
 </template>
 
 <script lang="ts">
@@ -25,6 +30,8 @@ export default defineComponent({
   data(){
     return {
       points:[] as point[],
+      history:[[]] as point[][],
+      history_point:1,
       drag_point:null,
       drag_shift:null,
       drag_center:null,
@@ -33,7 +40,7 @@ export default defineComponent({
       drag:false,
       key:null,
       mouse:null as point,
-      state:0
+      state:0,
     }
   },
   methods:{
@@ -76,7 +83,6 @@ export default defineComponent({
               //center
               if(getDistance(prev,this.mouse)<10)
               {
-                console.log('center') 
                 {
                   this.drag_point = prev
                   this.drag_shift = {x:prev.x - this.mouse.x, y:prev.y - this.mouse.y}
@@ -126,7 +132,6 @@ export default defineComponent({
         break;
         case 2:
         {
-          console.log('delete')
           var i = 0;
           for(const point of this.points)
           {
@@ -159,9 +164,17 @@ export default defineComponent({
       }
       this.update()
     },
-    handleKeyUp(e:KeyboardEvent)
+    async handleKeyUp(e:KeyboardEvent)
     {
-      this.key = null
+      this.key = null 
+      if(e.key == 'z' && e.ctrlKey && this.history_point > 0)
+      {
+        this.points = this.history[--this.history_point]
+      }
+      else if(e.key == 'y' && e.ctrlKey && this.history_point < this.history.length)
+      {
+        this.points = this.history[++this.history_point]
+      }
       this.update()
     },
     reverse(point:point,center:point):point
@@ -230,6 +243,8 @@ export default defineComponent({
       this.$refs.canvas.removeEventListener('mousemove',this.dragStep)
       this.state = 0
       this.drag = false
+      this.history.push(JSON.parse(JSON.stringify(this.points)))
+      this.history_point=this.history.length;
       this.update()
     },
     

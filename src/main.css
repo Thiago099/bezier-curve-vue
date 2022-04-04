@@ -6,6 +6,7 @@
 }
 body{
     background-color: var(--dark);
+    color:white;
 }
 :root {
 color-scheme: dark;
