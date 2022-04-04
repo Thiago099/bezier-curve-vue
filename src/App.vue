@@ -238,9 +238,9 @@ export default defineComponent({
       this.$refs.canvas.removeEventListener('mousemove',this.dragStep)
       this.state = 0
       this.drag = false
-      this.history.length=this.history_point+1;
+      this.history.length = this.history_point + 1;
       this.history.push(JSON.parse(JSON.stringify(this.points)))
-      this.history_point=this.history.length-1;
+      this.history_point=this.history.length - 1;
       this.update()
     },
     
