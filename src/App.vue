@@ -1,10 +1,5 @@
 <template>
   <div class="content">
-    <p>{{history}}</p>
-    <p>{{history_point}}</p>
-    <p>
-      {{this.points}}
-    </p>
     <canvas 
       ref="canvas" 
       width="800" 
@@ -169,11 +164,11 @@ export default defineComponent({
       this.key = null 
       if(e.key == 'z' && e.ctrlKey && this.history_point > 0)
       {
-        this.points = this.history[--this.history_point]
+        this.points = JSON.parse(JSON.stringify(this.history[--this.history_point]))
       }
       else if(e.key == 'y' && e.ctrlKey && this.history_point < this.history.length)
       {
-        this.points = this.history[++this.history_point]
+        this.points = JSON.parse(JSON.stringify(this.history[++this.history_point]))
       }
       this.update()
     },
@@ -243,8 +238,9 @@ export default defineComponent({
       this.$refs.canvas.removeEventListener('mousemove',this.dragStep)
       this.state = 0
       this.drag = false
+      this.history.length=this.history_point+1;
       this.history.push(JSON.parse(JSON.stringify(this.points)))
-      this.history_point=this.history.length;
+      this.history_point=this.history.length-1;
       this.update()
     },
     
